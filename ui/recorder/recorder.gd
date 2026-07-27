@@ -1,6 +1,6 @@
 extends Node2D
 
-@export var max_record_time = 15
+@export var max_record_time = 60
 @export var save_name: String = "test.wav"
 @onready var timer_record_limit: Timer = 	$TimerLimitRecord
 @onready var progress_bar: ProgressBar = $ProgressBar
