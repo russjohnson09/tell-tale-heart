@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://diiyphvk3p0fo"]
 
 [ext_resource type="Script" uid="uid://csgn0fqsxqicx" path="res://ui/recorder/recorder.gd" id="1_3iynx"]
+[ext_resource type="Script" uid="uid://dkex2g6fut6kl" path="res://addons/direct_audio_and_wav_24bits/scripts/direct_audio_input_recorder.gd" id="2_3e1he"]
 
 [sub_resource type="AudioStreamMicrophone" id="AudioStreamMicrophone_3iynx"]
 
@@ -45,6 +46,10 @@ bus = &"RecordingBus"
 [node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="." unique_id=1329990075]
 stream = SubResource("AudioStream_3e1he")
 autoplay = true
+
+[node name="DirectAudioInputRecorder" type="Node" parent="." unique_id=1973025592]
+script = ExtResource("2_3e1he")
+metadata/_custom_type_script = "uid://dkex2g6fut6kl"
 
 [connection signal="timeout" from="TimerLimitRecord" to="." method="_on_timer_limit_record_timeout"]
 [connection signal="pressed" from="RecordButton" to="." method="_on_record_button_pressed"]

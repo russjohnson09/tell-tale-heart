@@ -9,7 +9,11 @@ extends Node2D
 @onready var record_audiostream: AudioStreamPlayer = $AudioStreamPlayer
 @onready var playback_audiostream: AudioStreamPlayer = $AudioStreamPlayer2
 
-var recording: AudioStreamWAV
+@onready var recorder = $DirectAudioInputRecorder
+#@onready var player = $AudioStreamPlayerWav24B
+
+var recording: AudioStreamWAV24B
+var playback_recording: AudioStreamWAV
 var record_index
 var record_effect
 
@@ -32,7 +36,8 @@ func _process(delta: float) -> void:
 	else:
 		record_countdown.text = str(int(timer_record_limit.time_left))
 	
-	if record_effect.is_recording_active():
+	#if record_effect.is_recording_active():
+	if recorder.is_recording():
 		#$RecordLabel.text = "Recording"
 		$RecordButton.text = "Press To Stop Recording"
 	else:
@@ -43,6 +48,11 @@ func _process(delta: float) -> void:
 
 	else:
 		$PlayButton.text = "Play"
+		
+func start_record():
+	#record_effect.set_recording_active(true)
+	recorder.start_capturing()
+	
 #https://github.com/godotengine/godot-demo-projects/blob/master/audio/mic_record/MicRecord.gd
 func start_stop_recording():
 	
@@ -50,39 +60,38 @@ func start_stop_recording():
 	if not OS.request_permission("RECORD_AUDIO"):
 		return
 	
-	if record_effect.is_recording_active():
+	if recorder.is_recording():
 		stop_recording()
 		return
-	record_effect.set_recording_active(true)
+	start_record()
 	timer_record_limit.start(max_record_time)
-	
-	
+
+
+
 func stop_recording():
-	if not record_effect.is_recording_active():
+	if not recorder.is_recording():
 		return
+	recorder.stop_capturing()
 	timer_record_limit.stop()
-
-	recording = record_effect.get_recording()
-
-	# don't mess with these after the fact or lookup how to adjust these properly.
-	#recording.set_mix_rate(mix_rate)
-	#recording.set_format(format)
-	#recording.set_stereo(stereo)
+	recording = recorder.get_recording_as_wav24b()
+	#recording.save_to_wav("user://high_fidelity_capture.wav")
 	
-	record_effect.set_recording_active(false)
-	
+	print(recording)
 	print(OS.get_user_data_dir() + "/" + save_name)
 	recording.save_to_wav('user://%s' % save_name)
-	
-	# Set this to null to free up memory?
-	# I think yes this might help but also just having the timer record limit to 
-	# 15 seconds any longer and it should not be just in memory.
-#	https://godotengine.org/asset-library/asset/5081
-# It looks like this is a known issue.
 	recording = null
-	
 
-
+	#recording = record_effect.get_recording()
+	#
+	#var recording : AudioStreamWAV24B = recorder.get_recording_as_wav24b()
+#
+	## don't mess with these after the fact or lookup how to adjust these properly.
+	##recording.set_mix_rate(mix_rate)
+	##recording.set_format(format)
+	##recording.set_stereo(stereo)
+	#
+	#record_effect.set_recording_active(false)
+	#
 
 func _on_timer_limit_record_timeout() -> void:
 	stop_recording()
@@ -93,8 +102,8 @@ func _on_timer_limit_record_timeout() -> void:
 func load_recording():
 	# I always save after recording so this should always be here.
 	var sound = AudioStreamWAV.load_from_file('user://%s' % save_name)
-	recording = sound
-	return recording
+	playback_recording = sound
+	return playback_recording
 
 func _on_play_button_pressed() -> void:
 	stop_recording()
@@ -103,17 +112,17 @@ func _on_play_button_pressed() -> void:
 	if playback_audiostream.playing:
 		playback_audiostream.stop()
 		return
-	if not recording:
+	if not playback_recording:
 		return
 	
-	print_rich("\n[b]Playing recording:[/b] %s" % recording)
-	print_rich("[b]Format:[/b] %s" % ("8-bit uncompressed" if recording.format == 0 else "16-bit uncompressed" if recording.format == 1 else "IMA ADPCM compressed"))
-	print_rich("[b]Mix rate:[/b] %s Hz" % recording.mix_rate)
-	print_rich("[b]Stereo:[/b] %s" % ("Yes" if recording.stereo else "No"))
-	var data := recording.get_data()
-	print_rich("[b]Size:[/b] %s bytes" % data.size())
+	print_rich("\n[b]Playing recording:[/b] %s" % playback_recording)
+	#print_rich("[b]Format:[/b] %s" % ("8-bit uncompressed" if playback_recording.format == 0 else "16-bit uncompressed" if recording.format == 1 else "IMA ADPCM compressed"))
+	#print_rich("[b]Mix rate:[/b] %s Hz" % playback_recording.mix_rate)
+	#print_rich("[b]Stereo:[/b] %s" % ("Yes" if playback_recording.stereo else "No"))
+	var data := playback_recording.get_data()
+	#print_rich("[b]Size:[/b] %s bytes" % data.size())
 	
-	playback_audiostream.stream = recording
+	playback_audiostream.stream = playback_recording
 	playback_audiostream.play()
 
 
